@@ -1,0 +1,356 @@
+@model QuestionAnswer.Web.Models.HomeIndexViewModel
+
+@{
+    ViewData["Title"] = "Home";
+}
+
+@* Filter bar *@
+<div class="card border-0 shadow-sm rounded-3 mb-4">
+    <div class="card-body py-3">
+        <div class="row g-2 align-items-end flex-wrap">
+            <div class="col-auto">
+                <label class="form-label small text-muted mb-0 me-2">Search</label>
+                <input type="text" class="form-control form-control-sm" id="filterSearch" placeholder="Search questions..." aria-label="Search questions" style="min-width: 180px;" />
+            </div>
+            <div class="col-auto">
+                <label class="form-label small text-muted mb-0 me-2">Category</label>
+                <select class="form-select form-select-sm" style="min-width: 140px;" id="filterCategory" aria-label="Filter by category">
+                    <option value="">All categories</option>
+                    @foreach (var c in Model.Categories)
+                    {
+                        <option value="@c.CategoryId">@c.Name</option>
+                    }
+                </select>
+            </div>
+            <div class="col-auto">
+                <label class="form-label small text-muted mb-0 me-2">Tag</label>
+                <select class="form-select form-select-sm" style="min-width: 120px;" id="filterTag" aria-label="Filter by tag">
+                    <option value="">All tags</option>
+                    @foreach (var t in Model.Tags)
+                    {
+                        <option value="@t.TagId">@t.Name</option>
+                    }
+                </select>
+            </div>
+            <div class="col-auto">
+                <label class="form-label small text-muted mb-0 me-2">Sort</label>
+                <select class="form-select form-select-sm" style="min-width: 160px;" id="filterSort" aria-label="Sort order">
+                    <option value="newest">Newest first</option>
+                    <option value="oldest">Oldest first</option>
+                    <option value="most-answers">Most answers</option>
+                    <option value="most-views">Most views</option>
+                </select>
+            </div>
+            <div class="col-auto ms-auto">
+                <button type="button" class="btn btn-primary btn-sm" id="filterApply">Apply</button>
+                <button type="button" class="btn btn-outline-secondary btn-sm" id="filterClear">Clear</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    @* Main content *@
+    <div class="col-lg-8">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1 class="h4 mb-0 fw-bold text-dark">Latest Questions</h1>
+            @if (User.Identity?.IsAuthenticated ?? false)
+            {
+                <a class="btn btn-primary rounded-pill px-4 shadow-sm" asp-controller="Question" asp-action="Create">
+                    Ask Question
+                </a>
+            }
+            else
+            {
+                <a class="btn btn-outline-primary rounded-pill px-4" asp-controller="Account" asp-action="Login">
+                    Login to ask a question
+                </a>
+            }
+        </div>
+
+        @if (!Model.Questions.Any())
+        {
+            <div class="card border-0 shadow-sm rounded-3">
+                <div class="card-body text-center py-5">
+                    <p class="text-muted mb-0">No questions have been posted yet.</p>
+                    @if (!(User.Identity?.IsAuthenticated ?? false))
+                    {
+                        <p class="mt-2 mb-0 small">
+                            <a asp-controller="Account" asp-action="Login">Login</a> or
+                            <a asp-controller="Account" asp-action="Register">register</a> to ask the first question.
+                        </p>
+                    }
+                </div>
+            </div>
+        }
+        else
+        {
+            <div id="questionsEmptyFilter" class="alert alert-light border text-center py-4 d-none" role="status">
+                No questions match your filters. Try adjusting search, category, tag, or sort, or click <strong>Clear</strong>.
+            </div>
+            <div class="d-flex flex-column gap-3" id="questionsList">
+                @foreach (var q in Model.Questions)
+                {
+                    <a asp-controller="Question" asp-action="Details" asp-route-id="@q.QuestionId"
+                       class="card border-0 shadow-sm rounded-3 text-decoration-none text-dark question-card"
+                       data-question-id="@q.QuestionId"
+                       data-category-id="@q.CategoryId"
+                       data-tag-ids="@string.Join(",", q.TagIds)"
+                       data-created="@q.CreatedAt.ToUniversalTime().ToString("o")"
+                       data-answers="@q.AnswerCount"
+                       data-views="@q.ViewCount"
+                       data-title="@q.Title">
+                        <div class="card-body p-4">
+                            <div class="row align-items-center">
+                                <div class="col-auto text-center pe-3">
+                                    <div class="rounded-3 bg-light px-3 py-2">
+                                        <div class="fw-bold fs-5 text-primary">@q.AnswerCount</div>
+                                        <small class="text-muted">answers</small>
+                                    </div>
+                                </div>
+                                <div class="col">
+                                    <h5 class="card-title mb-2 fw-semibold">@q.Title</h5>
+                                    <p class="card-text text-muted small mb-0">
+                                        <span class="badge bg-secondary bg-opacity-10 text-secondary">@q.CategoryName</span>
+                                        <span class="ms-2">@q.CreatedAt.ToString("dd MMM yyyy HH:mm")</span>
+                                    </p>
+                                </div>
+                                <div class="col-auto text-end">
+                                    <div class="rounded-3 bg-light px-3 py-2">
+                                        <div class="fw-bold">@q.ViewCount</div>
+                                        <small class="text-muted">views</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </a>
+                }
+            </div>
+        }
+    </div>
+
+    @* Right sidebar *@
+    <aside class="col-lg-4">
+        <div class="sidebar-sticky">
+            @* Categories card *@
+            <div class="card shadow-sm rounded-3 mb-4 sidebar-card sidebar-card-categories">
+                <div class="card-header border-0 pt-4 pb-3 px-4 sidebar-card-header sidebar-card-header-categories">
+                    <h5 class="mb-0 fw-semibold text-white">Categories</h5>
+                </div>
+                <div class="card-body px-4 pb-4">
+                    @if (Model.Categories.Any())
+                    {
+                        <ul class="list-unstyled mb-0">
+                            @foreach (var c in Model.Categories)
+                            {
+                                <li class="mb-2">
+                                    <a href="#" class="d-block py-2 px-3 rounded-2 text-decoration-none text-dark sidebar-link"
+                                       data-category-id="@c.CategoryId">
+                                        @c.Name
+                                    </a>
+                                </li>
+                            }
+                        </ul>
+                    }
+                    else
+                    {
+                        <p class="text-muted small mb-0">No categories yet.</p>
+                    }
+                </div>
+            </div>
+
+            @* Tags card *@
+            <div class="card shadow-sm rounded-3 sidebar-card sidebar-card-tags">
+                <div class="card-header border-0 pt-4 pb-3 px-4 sidebar-card-header sidebar-card-header-tags">
+                    <h5 class="mb-0 fw-semibold text-white">Tags</h5>
+                </div>
+                <div class="card-body px-4 pb-4">
+                    @if (Model.Tags.Any())
+                    {
+                        <div class="d-flex flex-wrap gap-2">
+                            @foreach (var t in Model.Tags)
+                            {
+                                <a href="#" class="badge bg-secondary bg-opacity-10 text-secondary text-decoration-none px-3 py-2 tag-pill"
+                                   data-tag-id="@t.TagId">
+                                    @t.Name
+                                </a>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <p class="text-muted small mb-0">No tags yet.</p>
+                    }
+                </div>
+            </div>
+        </div>
+    </aside>
+</div>
+
+<style>
+    .question-card:hover {
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.08) !important;
+        transform: translateY(-1px);
+        transition: box-shadow 0.2s ease, transform 0.2s ease;
+    }
+    .sidebar-link:hover {
+        background-color: rgba(13, 110, 253, 0.08);
+        color: var(--bs-primary) !important;
+    }
+    .tag-pill:hover {
+        background-color: rgba(13, 110, 253, 0.15) !important;
+        color: var(--bs-primary) !important;
+    }
+    /* Sidebar cards – colourful heading and border */
+    .sidebar-card-categories {
+        border: 2px solid #0d6efd;
+        border-top: 4px solid #0d6efd;
+    }
+    .sidebar-card-header-categories {
+        background: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%);
+        color: #fff;
+        border-radius: calc(0.5rem - 2px) calc(0.5rem - 2px) 0 0;
+    }
+    .sidebar-card-tags {
+        border: 2px solid #198754;
+        border-top: 4px solid #198754;
+    }
+    .sidebar-card-header-tags {
+        background: linear-gradient(135deg, #198754 0%, #146c43 100%);
+        color: #fff;
+        border-radius: calc(0.5rem - 2px) calc(0.5rem - 2px) 0 0;
+    }
+    .sidebar-link.is-active,
+    .tag-pill.is-active {
+        background-color: rgba(13, 110, 253, 0.2) !important;
+        color: var(--bs-primary) !important;
+        font-weight: 600;
+    }
+    .sidebar-card-tags .tag-pill.is-active {
+        background-color: rgba(25, 135, 84, 0.2) !important;
+        color: var(--bs-success) !important;
+    }
+</style>
+
+@section Scripts {
+    <script>
+        (function () {
+            var searchEl = document.getElementById('filterSearch');
+            var categoryEl = document.getElementById('filterCategory');
+            var tagEl = document.getElementById('filterTag');
+            var sortEl = document.getElementById('filterSort');
+            var listEl = document.getElementById('questionsList');
+            var emptyFilterEl = document.getElementById('questionsEmptyFilter');
+            if (!listEl) return;
+
+            function parseTagIds(raw) {
+                if (!raw || !raw.trim()) return [];
+                return raw.split(',').map(function (s) { return parseInt(s.trim(), 10); }).filter(function (n) { return !isNaN(n); });
+            }
+
+            function cardMatches(card) {
+                var q = (searchEl.value || '').trim().toLowerCase();
+                var cat = categoryEl.value;
+                var tag = tagEl.value;
+                var title = (card.dataset.title || '').toLowerCase();
+                if (q && title.indexOf(q) === -1) return false;
+                if (cat && String(card.dataset.categoryId) !== cat) return false;
+                if (tag) {
+                    var ids = parseTagIds(card.dataset.tagIds || '');
+                    if (ids.indexOf(parseInt(tag, 10)) === -1) return false;
+                }
+                return true;
+            }
+
+            function sortCards(cards) {
+                var key = sortEl.value;
+                var sorted = cards.slice();
+                sorted.sort(function (a, b) {
+                    if (key === 'oldest') {
+                        return new Date(a.dataset.created) - new Date(b.dataset.created);
+                    }
+                    if (key === 'most-answers') {
+                        return parseInt(b.dataset.answers, 10) - parseInt(a.dataset.answers, 10);
+                    }
+                    if (key === 'most-views') {
+                        return parseInt(b.dataset.views, 10) - parseInt(a.dataset.views, 10);
+                    }
+                    return new Date(b.dataset.created) - new Date(a.dataset.created);
+                });
+                return sorted;
+            }
+
+            function updateSidebarActiveState() {
+                var catVal = categoryEl.value;
+                var tagVal = tagEl.value;
+                document.querySelectorAll('.sidebar-link').forEach(function (el) {
+                    el.classList.toggle('is-active', catVal && el.getAttribute('data-category-id') === catVal);
+                });
+                document.querySelectorAll('.tag-pill').forEach(function (el) {
+                    el.classList.toggle('is-active', tagVal && el.getAttribute('data-tag-id') === tagVal);
+                });
+            }
+
+            function applyFilters() {
+                var cards = Array.prototype.slice.call(listEl.querySelectorAll('.question-card'));
+                var matching = cards.filter(cardMatches);
+                var ordered = sortCards(matching);
+                cards.forEach(function (c) { c.classList.add('d-none'); });
+                ordered.forEach(function (c) {
+                    c.classList.remove('d-none');
+                    listEl.appendChild(c);
+                });
+                if (emptyFilterEl) {
+                    emptyFilterEl.classList.toggle('d-none', ordered.length > 0);
+                }
+                updateSidebarActiveState();
+            }
+
+            function clearFilters() {
+                searchEl.value = '';
+                categoryEl.value = '';
+                tagEl.value = '';
+                sortEl.value = 'newest';
+                applyFilters();
+            }
+
+            document.getElementById('filterApply').addEventListener('click', applyFilters);
+            document.getElementById('filterClear').addEventListener('click', clearFilters);
+            searchEl.addEventListener('keydown', function (e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    applyFilters();
+                }
+            });
+
+            document.querySelectorAll('.sidebar-link[data-category-id]').forEach(function (link) {
+                link.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    var id = link.getAttribute('data-category-id') || '';
+                    if (categoryEl.value === id) {
+                        categoryEl.value = '';
+                    } else {
+                        categoryEl.value = id;
+                        tagEl.value = '';
+                    }
+                    applyFilters();
+                });
+            });
+            document.querySelectorAll('.tag-pill[data-tag-id]').forEach(function (pill) {
+                pill.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    var id = pill.getAttribute('data-tag-id') || '';
+                    if (tagEl.value === id) {
+                        tagEl.value = '';
+                    } else {
+                        tagEl.value = id;
+                        categoryEl.value = '';
+                    }
+                    applyFilters();
+                });
+            });
+
+            applyFilters();
+        })();
+    </script>
+}

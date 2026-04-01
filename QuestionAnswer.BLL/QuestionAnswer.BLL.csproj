@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="..\QuestionAnswer.DAL\QuestionAnswer.DAL.csproj" />
+    <ProjectReference Include="..\QuestionAnswer.Contract\QuestionAnswer.Contract.csproj" />
+    <ProjectReference Include="..\QuestionAnswer.Domain\QuestionAnswer.Domain.csproj" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+</Project>

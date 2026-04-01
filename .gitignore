@@ -1,0 +1,24 @@
+[Bb]in/
+[Oo]bj/
+.vs/
+.vscode/
+*.user
+*.suo
+*.userosscache
+*.sln.doccache
+.ionide/
+QuestionAnswer.Web/wwwroot/lib/
+QuestionAnswer.Web/bin/
+QuestionAnswer.Web/obj/
+QuestionAnswer.DAL/bin/
+QuestionAnswer.DAL/obj/
+QuestionAnswer.BLL/bin/
+QuestionAnswer.BLL/obj/
+QuestionAnswer.Domain/bin/
+QuestionAnswer.Domain/obj/
+QuestionAnswer.Contract/bin/
+QuestionAnswer.Contract/obj/
+appsettings.Development.json
+# Ignore local DB files if any
+*.mdf
+*.ldf
